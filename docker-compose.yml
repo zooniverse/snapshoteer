@@ -2,7 +2,12 @@ version: '3'
 services:
   snapshoteer:
     build: .
+    volumes:
+      - ./:/node_app
+      - node_modules:/node_app/node_modules
     environment:
       - PORT=8080
     ports:
       - "8080:8080"
+volumes:
+  node_modules:
