@@ -146,6 +146,49 @@ app.get('/', async (request, response) => {
     });
 })
 
+app.get('/download', async (request, response) => {
+    const browser = response.locals.browser;
+    const page = await browser.newPage();
+    const mainUrl = request.query.url;
+    let mainUrlStatus;
+    await page.setRequestInterception(true);
+    page.on("request", request => {
+        const url = request.url();
+        console.log("download request url:", url);
+        request.continue();
+    });
+    page.on("requestfailed", request => {
+        const url = request.url();
+        console.log("download request failed url:", url);
+    });
+    page.on("response", response => {
+        const request = response.request();
+        const url = request.url();
+        const status = response.status();
+        const resourceType = response.request().resourceType();
+
+        if (resourceType === 'script' || resourceType === 'stylesheet') {
+            const url = new URL(response.request().url());
+            if (url.pathname.startsWith('/application')) {
+                response.text().then(function (responseText) {
+                    console.log('Writing response text to tmp' + url.pathname);
+                    fs.writeFileSync("tmp" + url.pathname, responseText);
+                });
+            }
+        }
+
+        console.log("download response url:", url, "status:", status);
+        if (url === mainUrl) {
+            mainUrlStatus = status;
+        }
+    });
+    await page.goto(mainUrl, { waitUntil: 'networkidle0' });
+    console.log("status for main url:", mainUrlStatus);
+    const html = await page.content();
+    fs.writeFileSync("tmp/index.html", html);
+    await browser.close();
+});
+
 app.listen(PORT, function () {
     console.log(`Snapshoteer app is listening on port ${PORT}`);
 });
