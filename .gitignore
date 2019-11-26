@@ -3,6 +3,8 @@ logs
 *.log
 npm-debug.log*
 
+.DS_Store
+
 # Runtime data
 pids
 *.pid
@@ -29,3 +31,4 @@ node_modules/
 
 # git commit_id of the app
 commit_id.txt
+tmp/*
